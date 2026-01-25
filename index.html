@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Search | Jahmir Real Estate</title>
+    <!-- Leaflet CSS (Local) -->
+    <link rel="stylesheet" href="assets/leaflet/leaflet.css" />
+
+    <link rel="stylesheet" href="css/te-style.css">
+
+    <style>
+        /* CRITICAL MAP FIXES */
+        .leaflet-pane,
+        .leaflet-tile,
+        .leaflet-marker-icon,
+        .leaflet-marker-shadow,
+        .leaflet-tile-container,
+        .leaflet-map-pane svg {
+            max-width: none !important;
+            max-height: none !important;
+            box-shadow: none !important;
+            /* Some frameworks add global box-shadow */
+        }
+
+        /* Premium Dark Scrollbar for Content */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #000;
+    </style>
+</head>
+
+<body>
+
+    <div class="container app-container" style="max-width: 100%; border: none;">
+        <header style="background: #1a1a1a; color: white; border-bottom: none; padding: 15px 30px; flex-shrink: 0;">
+            <div class="brand" style="color: white;">
+                Jahmir Real Estate
+                <span class="sub" style="color: #888;">Philadelphia Rentals</span>
+            </div>
+            <div class="status-indicator" style="color: white; opacity: 0.8;">
+            </div>
+        </header>
+
+        <div class="split-layout" style="flex: 1; min-height: 0; display: flex; flex-direction: row;">
+
+            <!-- Left: Content (Properties - Primary Focus) -->
+            <div id="content-panel"
+                style="width: 65%; height: 100%; overflow-y: auto; background: #fff; display: flex; flex-direction: column; border-right: 1px solid var(--border-color);">
+
+                <!-- Filters Section -->
+                <div class="filters-container"
+                    style="padding: 24px 32px; background: white; border-bottom: 1px solid var(--border-color);">
+
+                    <!-- Top Row: Search (Prominent) -->
+                    <div style="display: grid; grid-template-columns: 1fr auto; gap: 12px; margin-bottom: 20px;">
+                        <input type="text" id="filter-search" placeholder="Search by city, zip, or address..."
+                            style="width: 100%; padding: 12px 16px; background: #fff; border: 1px solid var(--border-color); font-size: 14px; height: 48px; font-weight: 500;">
+                        <button
+                            style="padding: 0 24px; background: var(--accent-color); color: white; border: none; font-weight: 700; text-transform: uppercase; font-size: 11px; height: 48px; cursor: pointer; letter-spacing: 0.05em;">Search</button>
+                    </div>
+
+                    <!-- Middle Row: Filters (Grid) -->
+                    <div class="filter-row"
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px;">
+                        <div>
+                            <select id="filter-available" class="filter-select"
+                                style="height: 42px; border-color: var(--light-border); color: var(--text-color); font-weight: 500;">
+                                <option value="">Available</option>
+                                <option value="now">Now</option>
+                                <option value="2026-01">Jan 2026</option>
+                                <option value="2026-02">Feb 2026</option>
+                                <option value="2026-03">Mar 2026</option>
+                                <option value="2026-04">Apr 2026</option>
+                                <option value="unknown">Unknown</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select id="filter-price" class="filter-select"
+                                style="height: 42px; border-color: var(--light-border); color: var(--text-color); font-weight: 500;">
+                                <option value="">Rent</option>
+                                <option value="0-1425">$0 - $1425</option>
+                                <option value="1435-1520">$1435 - $1520</option>
+                                <option value="1550-1750">$1550 - $1750</option>
+                                <option value="1765-2240">$1765 - $2240</option>
+                                <option value="2250-3100">$2250 - $3100</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select id="filter-pets" class="filter-select"
+                                style="height: 42px; border-color: var(--light-border); color: var(--text-color); font-weight: 500;">
+                                <option value="">Pets</option>
+                                <option value="dogs">Dogs</option>
+                                <option value="cats">Cats</option>
+                                <option value="cats_dogs">Cats and dogs</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select id="filter-beds" class="filter-select"
+                                style="height: 42px; border-color: var(--light-border); color: var(--text-color); font-weight: 500;">
+                                <option value="">Bedrooms</option>
+                                <option value="studio">Studio</option>
+                                <option value="1">1 bed</option>
+                                <option value="2">2 beds</option>
+                                <option value="3">3 beds</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Row: Meta (Results & Sort) -->
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f0f0f0; padding-top: 16px;">
+                        <span id="results-count"
+                            style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-color);">Loading...</span>
+
+                        <div
+                            style="display: flex; gap: 8px; align-items: center; font-size: 11px; text-transform: uppercase;">
+                            <span style="color: var(--muted-color); font-weight: 500;">Sort by</span>
+                            <select id="sort-results"
+                                style="border: none; background: transparent; font-weight: 700; cursor: pointer; padding: 0 16px 0 0; color: var(--text-color); outline:none; width: auto; font-size: 11px; text-transform: uppercase;">
+                                <option value="newest">Newest on-market</option>
+                                <option value="available">Soonest available</option>
+                                <option value="price_asc">Lowest to highest rent</option>
+                                <option value="price_desc">Highest to lowest rent</option>
+                                <option value="distance">Closest to furthest</option>
+                                <option value="sqft_desc">Highest to lowest square footage</option>
+                                <option value="sqft_asc">Lowest to highest square footage</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detail View (Initially Hidden) -->
+                <div id="property-detail-view" style="display: none; height: 100%; flex-direction: column;">
+                    <div
+                        style="padding: 15px 30px; border-bottom: 1px solid var(--light-border); position: sticky; top: 0; z-index: 50; background: #fff;">
+                        <button onclick="closeDetailView()"
+                            style="background: none; border: none; font-weight: 700; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 11px;">
+                            <span style="font-size: 16px;">&lsaquo;</span> Back to Results
+                        </button>
+                    </div>
+                    <div id="detail-content" style="padding: 0;"></div>
+                </div>
+
+                <!-- Grid View -->
+                <div id="property-list-view" style="padding: 20px 30px 40px;">
+                    <div id="property-grid"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px;">
+                        <!-- Cards injected here -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right: Map (Secondary) -->
+            <div id="map-panel" style="width: 35%; height: 100%; position: relative;">
+                <div id="map-status" class="map-status">Loading map...</div>
+
+                <div id="map" style="width: 100%; height: 100%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS (Local) -->
+    <script src="assets/leaflet/leaflet.js"></script>
+
+    <!-- Mock Data -->
+    <script src="js/properties.js"></script>
+
+    <script>
+        // --- STATE ---
+        let filteredProperties = [...properties];
+
+        // --- DOM ---
+        const gridEl = document.getElementById('property-grid');
+        const countEl = document.getElementById('results-count');
+        const searchInput = document.getElementById('filter-search');
+        const searchBtn = document.querySelector('.filters-container button');
+        const filters = {
+            beds: document.getElementById('filter-beds'),
+            price: document.getElementById('filter-price'),
+            pets: document.getElementById('filter-pets'),
+            available: document.getElementById('filter-available')
+        };
+        const sortSelect = document.getElementById('sort-results');
+        const detailView = document.getElementById('property-detail-view');
+        const detailContent = document.getElementById('detail-content');
+        const listView = document.getElementById('property-list-view');
+        const filtersContainer = document.querySelector('.filters-container');
+
+
+        // --- MAP SETUP ---
+        // Restrict to Philadelphia
+        const phillyBounds = [
+            [39.8670, -75.2803], // Southwest
+            [40.1379, -74.9557]  // Northeast
+        ];
+
+        const mapStatus = document.getElementById('map-status');
+        let map = null;
+        let cartoTiles = null;
+        let fallbackTiles = null;
+        let fallbackGrid = null;
+        let tilesLoaded = 0;
+        let markers = {};
+        let drawnItems = null;
+        let drawnArea = null;
+        let markerIcon = null;
+        let activeIcon = null;
+
+        const initMap = () => {
+            if (!window.L) {
+                mapStatus.textContent = 'Map library failed to load.';
+                mapStatus.classList.add('error');
+                return null;
+            }
+            const mapEl = document.getElementById('map');
+            if (!mapEl) {
+                mapStatus.textContent = 'Map container missing.';
+                mapStatus.classList.add('error');
+                return null;
+            }
+
+            map = L.map('map', {
+                zoomControl: false,
+                minZoom: 11,
+                maxBounds: phillyBounds,
+                maxBoundsViscosity: 1.0
+            }).setView([39.9526, -75.1652], 13);
+
+            // CartoDB Dark Matter - Premium, High Contrast, clean
+            cartoTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; CartoDB',
+                subdomains: 'abcd',
+                maxZoom: 20
+            }).addTo(map);
+            fallbackTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap',
+                maxZoom: 20
+            });
+            fallbackGrid = L.gridLayer({
+                tileSize: 256,
+                createTile: function () {
+                    const tile = document.createElement('canvas');
+                    tile.width = 256;
+                    tile.height = 256;
+                    const ctx = tile.getContext('2d');
+                    ctx.fillStyle = '#f5f6f7';
+                    ctx.fillRect(0, 0, 256, 256);
+                    ctx.strokeStyle = '#e2e4e8';
+                    ctx.lineWidth = 1;
+                    for (let i = 0; i <= 256; i += 64) {
+                        ctx.beginPath();
+                        ctx.moveTo(i, 0);
+                        ctx.lineTo(i, 256);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.moveTo(0, i);
+                        ctx.lineTo(256, i);
+                        ctx.stroke();
+                    }
+                    ctx.fillStyle = '#b9bec6';
+                    ctx.font = '12px Arial';
+                    ctx.fillText('PHILLY', 18, 30);
+                    return tile;
+                }
+            });
+
+            // Move zoom control away from draw tools
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+            markers = {};
+            drawnItems = new L.FeatureGroup();
+            map.addLayer(drawnItems);
+            drawnArea = null;
+            // Create a mask to grey out areas outside Philly
+            // Outer bounds (world) with hole for Philly
+            const worldBounds = [
+                [90, -180],
+                [90, 180],
+                [-90, 180],
+                [-90, -180]
+            ];
+            const phillyHole = [
+                [phillyBounds[0][0], phillyBounds[0][1]], // SW
+                [phillyBounds[0][0], phillyBounds[1][1]], // SE
+                [phillyBounds[1][0], phillyBounds[1][1]], // NE
+                [phillyBounds[1][0], phillyBounds[0][1]]  // NW
+            ];
+            L.polygon([worldBounds, phillyHole], {
+                color: 'transparent',
+                fillColor: '#000',
+                fillOpacity: 0.4,
+                interactive: false
+            }).addTo(map);
+
+            // Philly border highlight
+            L.rectangle(phillyBounds, {
+                color: '#ff4d00',
+                weight: 2,
+                dashArray: '8 4',
+                fill: false,
+                interactive: false
+            }).addTo(map);
+
+            // Ensure map renders correctly after load
+            setTimeout(() => {
+                map.invalidateSize();
+                const size = map.getSize();
+                if (size.x < 50 || size.y < 50) {
+                    mapStatus.textContent = 'Map container has zero size.';
+                    mapStatus.classList.add('error');
+                }
+            }, 150);
+
+            markerIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: "<div style='background-color:#ff4d00; width: 12px; height: 12px; border: 2px solid white; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.3);'></div>",
+                iconSize: [12, 12],
+                iconAnchor: [6, 6]
+            });
+            activeIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: "<div style='background-color:#1a1a1a; width: 16px; height: 16px; border: 2px solid white; border-radius: 50%; box-shadow: 0 4px 8px rgba(0,0,0,0.4); transform: scale(1.2);'></div>",
+                iconSize: [16, 16],
+                iconAnchor: [8, 8]
+            });
+
+            return map;
+        };
+
+        // --- FUNCTIONS ---
+
+        function renderGrid() {
+            gridEl.innerHTML = '';
+            countEl.innerText = `${filteredProperties.length} Results`;
+
+            filteredProperties.forEach(prop => {
+                const card = document.createElement('div');
+                card.className = 'property-card-rich';
+
+                const isPetFriendly = prop.amenities.some(a => /pet|cat|dog/i.test(a));
+
+                card.innerHTML = `
+                    <div class="card-image-wrapper" style="height: 200px; position:relative; overflow:hidden;">
+                        <img src="${prop.image}" alt="${prop.address}" style="width:100%; height:100%; object-fit:cover; transition: transform 0.5s ease;">
+                        <div style="position: absolute; top: 12px; left: 12px; background: white; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase;">
+                            ${prop.type}
+                        </div>
+                    </div>
+                    
+                    <div class="card-content" style="padding: 16px;">
+                        
+                        <!-- Price & Address -->
+                        <div style="margin-bottom: 12px;">
+                            <div style="font-size: 18px; font-weight: 800; color: var(--text-color); margin-bottom: 2px;">
+                                ${prop.price} <span style="font-size: 12px; font-weight: 500; color: #666;">/mo</span>
+                            </div>
+                            <h3 style="font-size: 13px; font-weight: 500; color: #444; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: none;">${prop.address}</h3>
+                        </div>
+
+                        <!-- Stats Grid -->
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #f0f0f0;">
+                            <div style="text-align: center;">
+                                <div style="font-weight: 800; font-size: 13px;">${prop.bedrooms}</div>
+                                <div style="font-size: 9px; text-transform: uppercase; color: #888;">Bed</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-weight: 800; font-size: 13px;">${prop.bathrooms}</div>
+                                <div style="font-size: 9px; text-transform: uppercase; color: #888;">Bath</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-weight: 800; font-size: 13px;">${prop.sqft}</div>
+                                <div style="font-size: 9px; text-transform: uppercase; color: #888;">Sqft</div>
+                            </div>
+                             <div style="text-align: center;">
+                                <div style="font-weight: 800; font-size: 13px;">${isPetFriendly ? 'Yes' : 'No'}</div>
+                                <div style="font-size: 9px; text-transform: uppercase; color: #888;">Pets</div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="card-actions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <button class="action-btn primary" onclick="event.stopPropagation(); alert('Showing Request')" style="justify-content:center; padding: 10px 0; font-size: 11px;">Schedule Tour</button>
+                            <button class="action-btn secondary" onclick="event.stopPropagation(); alert('Apply')" style="justify-content:center; padding: 10px 0; border: 1px solid var(--border-color); font-size: 11px;">Apply Now</button>
+                        </div>
+                    </div>
+                `;
+
+                // Card Interaction
+                card.addEventListener('mouseenter', () => highlightMarker(prop.id));
+                card.addEventListener('mouseleave', () => resetMarker(prop.id));
+                card.onclick = () => openDetail(prop.id);
+
+                gridEl.appendChild(card);
+            });
+
+            updateMapMarkers();
+        }
+
+        function updateMapMarkers() {
+            if (!map || !markerIcon) return;
+            // Clear existing
+            Object.values(markers).forEach(m => map.removeLayer(m));
+
+            // Add new
+            filteredProperties.forEach(prop => {
+                const m = L.marker(prop.coordinates, { icon: markerIcon }).addTo(map);
+                m.bindPopup(`< div style = "font-weight:700;" > ${prop.price}</div > <div style="font-size:10px;">${prop.address}</div>`);
+                m.on('click', () => openDetail(prop.id));
+                markers[prop.id] = m;
+            });
+        }
+
+        function highlightMarker(id) {
+            if (markers[id]) markers[id].setIcon(activeIcon);
+        }
+
+        function resetMarker(id) {
+            if (markers[id]) markers[id].setIcon(markerIcon);
+        }
+
+        function filterProperties() {
+            const term = searchInput.value.toLowerCase();
+            const bedsVal = filters.beds.value;
+            const priceVal = filters.price.value;
+            const petsVal = filters.pets.value;
+            const availVal = filters.available.value;
+
+            filteredProperties = properties.filter(p => {
+                // Search
+                if (term && !p.address.toLowerCase().includes(term)) return false;
+
+                // Beds
+                if (bedsVal) {
+                    if (bedsVal === 'studio') {
+                        if (p.bedrooms !== 0) return false;
+                    } else {
+                        if (p.bedrooms < parseInt(bedsVal)) return false;
+                    }
+                }
+
+                // Price Range
+                if (priceVal) {
+                    const [min, max] = priceVal.split('-').map(Number);
+                    const pPrice = parseInt(p.price.replace(/[$,]/g, ''));
+                    if (pPrice < min || pPrice > max) return false;
+                }
+
+                // Pets
+                if (petsVal) {
+                    // Check amenities for keywords
+                    const hasDogs = p.amenities.some(a => /dog/i.test(a));
+                    const hasCats = p.amenities.some(a => /cat/i.test(a));
+
+                    if (petsVal === 'dogs' && !hasDogs) return false;
+                    if (petsVal === 'cats' && !hasCats) return false;
+                    if (petsVal === 'cats_dogs' && (!hasDogs || !hasCats)) return false;
+                }
+
+                // Available - Logic would go here if data supported it
+
+                return true;
+            });
+
+            sortProperties(); // Apply sort after filtering
+            renderGrid();
+        }
+
+        function sortProperties() {
+            const sortVal = sortSelect ? sortSelect.value : 'newest';
+
+            filteredProperties.sort((a, b) => {
+                const priceA = parseInt(a.price.replace(/[$,]/g, ''));
+                const priceB = parseInt(b.price.replace(/[$,]/g, ''));
+
+                if (sortVal === 'price_asc') return priceA - priceB;
+                if (sortVal === 'price_desc') return priceB - priceA;
+                if (sortVal === 'sqft_asc') return a.sqft - b.sqft;
+                if (sortVal === 'sqft_desc') return b.sqft - a.sqft;
+                // Default / Newest (mock using ID or just leave as is)
+                return b.id - a.id;
+            });
+        }
+
+        // --- DETAIL VIEW LOGIC ---
+        function openDetail(id) {
+            const prop = properties.find(p => p.id === id);
+            if (!prop) return;
+
+            // Simple Detail Template
+            detailContent.innerHTML = `
+                <div class="detail-hero" style="position: relative; height: 400px;">
+                    <img src="${prop.image}" style="width: 100%; height: 100%; object-fit: cover;">
+                    <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%); display: flex; flex-direction: column; justify-content: flex-end; padding: 40px;">
+                         <div style="max-width: 1100px; margin: 0 auto; width: 100%;">
+                             <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+                                <span style="background: var(--accent-color); color: white; padding: 6px 12px; text-transform: uppercase; font-size: 11px; font-weight: 700; border-radius: 4px;">For Rent</span>
+                                <span style="background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); color: white; padding: 6px 12px; text-transform: uppercase; font-size: 11px; font-weight: 700; border-radius: 4px;">${prop.type}</span>
+                             </div>
+                             <h1 style="color: white; font-size: 36px; line-height: 1.1; font-weight: 800; margin: 0 0 10px 0; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">${prop.address}</h1>
+                             
+                             <div style="display: flex; align-items: center; gap: 30px; color: white; margin-top: 20px;">
+                                 <div style="display: flex; align-items: baseline; gap: 6px;">
+                                    <span style="font-size: 32px; font-weight: 700;">${prop.price}</span>
+                                    <span style="font-size: 16px; opacity: 0.8; font-weight: 500;">/mo</span>
+                                 </div>
+                                 <div style="width: 1px; height: 40px; background: rgba(255,255,255,0.3);"></div>
+                                 <div style="display: flex; gap: 30px;">
+                                     <div style="text-align: center;">
+                                         <div style="font-size: 20px; font-weight: 700; line-height: 1;">${prop.bedrooms}</div>
+                                         <div style="font-size: 11px; text-transform: uppercase; opacity: 0.8; margin-top: 4px;">Bed</div>
+                                     </div>
+                                     <div style="text-align: center;">
+                                         <div style="font-size: 20px; font-weight: 700; line-height: 1;">${prop.bathrooms}</div>
+                                         <div style="font-size: 11px; text-transform: uppercase; opacity: 0.8; margin-top: 4px;">Bath</div>
+                                     </div>
+                                      <div style="text-align: center;">
+                                         <div style="font-size: 20px; font-weight: 700; line-height: 1;">${prop.sqft}</div>
+                                         <div style="font-size: 11px; text-transform: uppercase; opacity: 0.8; margin-top: 4px;">Sq Ft</div>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+                    </div>
+                </div>
+
+                <div class="detail-body" style="padding: 40px; max-width: 1100px; margin: 0 auto;">
+                    <div class="detail-grid" style="display: grid; grid-template-columns: 2fr 1.2fr; gap: 60px;">
+                        
+                        <!-- Main Content -->
+                        <div class="detail-main">
+                             <div style="margin-bottom: 40px;">
+                                <h3 style="font-size: 11px; font-weight: 800; color: var(--accent-color); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;">Overview</h3>
+                                <p style="font-size: 16px; line-height: 1.8; color: #444;">${prop.description} Experience the best of Philadelphia living in this thoughtfully designed space, featuring premium finishes and modern conveniences throughout.</p>
+                             </div>
+
+                             <div style="margin-bottom: 40px;">
+                                <h3 style="font-size: 11px; font-weight: 800; color: var(--accent-color); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px;">Property Features</h3>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px;">
+                                     ${prop.amenities.map(a => `
+                                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: #f9f9f9; border-radius: 6px;">
+                                            <div style="width: 6px; height: 6px; background: var(--accent-color); border-radius: 50%;"></div>
+                                            <span style="font-size: 13px; font-weight: 600; color: #333;">${a}</span>
+                                        </div>
+                                     `).join('')}
+                                </div>
+                             </div>
+                        </div>
+
+                        <!-- Sidebar -->
+                        <div class="detail-sidebar">
+                            <div style="background: white; border: 1px solid #e6e6e6; padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); position: sticky; top: 80px;">
+                                <div style="text-align: center; margin-bottom: 20px;">
+                                    <h3 style="font-size: 18px; margin-bottom: 6px;">Interested?</h3>
+                                    <p style="font-size: 13px; color: #666;">Schedule a tour or request an application.</p>
+                                </div>
+                                
+                                <form onsubmit="event.preventDefault(); alert('Request Sent!');">
+                                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                                        <input type="text" placeholder="Full Name" style="width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; background: #fafafa;">
+                                        <input type="tel" placeholder="Phone Number" style="width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; background: #fafafa;">
+                                        <input type="email" placeholder="Email Address" style="width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; background: #fafafa;">
+                                    </div>
+                                    
+                                    <button style="width: 100%; background: var(--text-color); color: white; border: none; padding: 16px; font-weight: 800; text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em; border-radius: 6px; cursor: pointer; margin-top: 20px; transition: background 0.2s;">Schedule Tour</button>
+                                    <button style="width: 100%; background: transparent; color: var(--text-color); border: 1px solid var(--border-color); padding: 16px; font-weight: 800; text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em; border-radius: 6px; cursor: pointer; margin-top: 10px;">Apply Now</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            listView.style.display = 'none';
+            filtersContainer.style.display = 'none';
+            detailView.style.display = 'flex';
+
+            // Fly map
+            if (map) {
+                map.invalidateSize();
+                map.flyTo(prop.coordinates, 16);
+                highlightMarker(id);
+            }
+        }
+
+        function closeDetailView() {
+            detailView.style.display = 'none';
+            listView.style.display = 'block';
+            filtersContainer.style.display = 'block';
+            if (map) {
+                map.invalidateSize();
+                map.flyToBounds(phillyBounds, { duration: 1.5 });
+            }
+        }
+
+        // --- EVENT LISTENERS ---
+        Object.values(filters).forEach(el => el.addEventListener('change', filterProperties));
+        if (sortSelect) sortSelect.addEventListener('change', () => { sortProperties(); renderGrid(); });
+        searchInput.addEventListener('input', filterProperties);
+        searchBtn.addEventListener('click', filterProperties);
+
+        // --- INIT ---
+        initMap();
+        renderGrid();
+        if (map) {
+            map.fitBounds(phillyBounds);
+        }
+
+        // Responsive
+        window.addEventListener('resize', () => {
+            if (map) map.invalidateSize();
+        });
+
+        function isPointInPolygon(point, polygon) {
+            const y = point[0];
+            const x = point[1];
+            let inside = false;
+            for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                const yi = polygon[i][0], xi = polygon[i][1];
+                const yj = polygon[j][0], xj = polygon[j][1];
+                const intersect = ((yi > y) !== (yj > y)) &&
+                    (x < (xj - xi) * (y - yi) / (yj - yi + 0.0) + xi);
+                if (intersect) inside = !inside;
+            }
+            return inside;
+        }
+
+        let tileErrors = 0;
+        const showMapError = () => {
+            mapStatus.textContent = 'Map tiles failed to load. Check your connection.';
+            mapStatus.classList.add('error');
+        };
+
+        // Hide loading status once map is ready
+        if (map) {
+            mapStatus.classList.add('hidden');
+        }
+
+        const markTilesLoaded = () => {
+            tilesLoaded += 1;
+            mapStatus.classList.add('hidden');
+        };
+
+        if (map) {
+            map.whenReady(() => {
+                setTimeout(() => {
+                    if (tilesLoaded === 0 && fallbackGrid) {
+                        if (cartoTiles && map.hasLayer(cartoTiles)) map.removeLayer(cartoTiles);
+                        if (fallbackTiles && map.hasLayer(fallbackTiles)) map.removeLayer(fallbackTiles);
+                        map.addLayer(fallbackGrid);
+                        mapStatus.textContent = 'Tiles blocked. Showing fallback grid.';
+                        mapStatus.classList.remove('hidden');
+                        mapStatus.classList.add('error');
+                    }
+                }, 2500);
+            });
+        }
+
+        if (cartoTiles) {
+            cartoTiles.on('tileload', markTilesLoaded);
+            cartoTiles.on('tileerror', () => {
+                tileErrors += 1;
+                if (map && fallbackTiles && !map.hasLayer(fallbackTiles)) {
+                    map.addLayer(fallbackTiles);
+                }
+                if (tileErrors > 3) {
+                    showMapError();
+                }
+            });
+        }
+
+        if (fallbackTiles) {
+            fallbackTiles.on('tileload', markTilesLoaded);
+            fallbackTiles.on('tileerror', () => {
+                tileErrors += 1;
+                if (tileErrors > 3) {
+                    showMapError();
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
