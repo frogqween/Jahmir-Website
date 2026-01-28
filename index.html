@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jahmir Real Estate</title>
+    <title>Jahmir G.</title>
     <!-- Leaflet CSS (Local) -->
     <link rel="stylesheet" href="assets/leaflet/leaflet.css" />
 
@@ -40,19 +40,27 @@
 
         ::-webkit-scrollbar-thumb:hover {
             background: #000;
+        }
     </style>
 </head>
 
 <body>
 
     <div class="container app-container" style="max-width: 100%; border: none;">
-        <header style="background: #1a1a1a; color: white; border-bottom: none; padding: 15px 30px; flex-shrink: 0;">
-            <div class="brand" style="color: white;">
-                Jahmir Real Estate
+        <header
+            style="background: #1a1a1a; color: white; border-bottom: none; padding: 15px 30px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
+            <a href="index.html" class="brand" style="color: white; text-decoration: none;">
+                Jahmir G. Realty
                 <span class="sub" style="color: #888;">Philadelphia Rentals</span>
-            </div>
-            <div class="status-indicator" style="color: white; opacity: 0.8;">
-            </div>
+            </a>
+            <nav style="display: flex; gap: 20px; align-items: center;">
+                <a href="index.html"
+                    style="color: white; text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--accent-color);">Properties</a>
+                <a href="form.html"
+                    style="color: rgba(255,255,255,0.7); text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; transition: color 0.2s;"
+                    onmouseover="this.style.color='white'"
+                    onmouseout="this.style.color='rgba(255,255,255,0.7)'">Form</a>
+            </nav>
         </header>
 
         <div class="split-layout" style="flex: 1; min-height: 0; display: flex; flex-direction: row;">
@@ -286,35 +294,68 @@
             drawnItems = new L.FeatureGroup();
             map.addLayer(drawnItems);
             drawnArea = null;
-            // Create a mask to grey out areas outside Philly
-            // Outer bounds (world) with hole for Philly
-            const worldBounds = [
-                [90, -180],
-                [90, 180],
-                [-90, 180],
-                [-90, -180]
-            ];
-            const phillyHole = [
-                [phillyBounds[0][0], phillyBounds[0][1]], // SW
-                [phillyBounds[0][0], phillyBounds[1][1]], // SE
-                [phillyBounds[1][0], phillyBounds[1][1]], // NE
-                [phillyBounds[1][0], phillyBounds[0][1]]  // NW
-            ];
-            L.polygon([worldBounds, phillyHole], {
-                color: 'transparent',
-                fillColor: '#000',
-                fillOpacity: 0.4,
-                interactive: false
-            }).addTo(map);
+            // Load Philly Limits GeoJSON
+            fetch('assets/philly_limits.geojson')
+                .then(response => response.json())
+                .then(data => {
+                    // Extract the polygon coordinates
+                    // Assumes FeatureCollection -> Feature -> Geometry -> Polygon/MultiPolygon
+                    // This file seems to be a single Polygon (Feature) from inspection, but let's be safe
+                    const layer = L.geoJSON(data, {
+                        style: {
+                            color: '#ff4d00',
+                            weight: 3,
+                            fillColor: '#ff4d00',
+                            fillOpacity: 0.08,
+                            opacity: 1
+                        },
+                        interactive: false
+                    }).addTo(map);
 
-            // Philly border highlight
-            L.rectangle(phillyBounds, {
-                color: '#ff4d00',
-                weight: 2,
-                dashArray: '8 4',
-                fill: false,
-                interactive: false
-            }).addTo(map);
+                    // Create the mask (World minus Philly)
+                    // We need the raw LatLng coordinates array for the hole
+                    // Helper to extract coordinates from the Leaflet layer
+                    let phillyLatLngs = [];
+                    layer.eachLayer(l => {
+                        if (l instanceof L.Polygon) {
+                            // Use the first ring (outer boundary)
+                            // If MultiPolygon, this might need iteration, but usually it's one main shell
+                            phillyLatLngs = l.getLatLngs()[0];
+                        }
+                    });
+
+                    if (phillyLatLngs.length > 0) {
+                        const worldBounds = [
+                            [90, -180],
+                            [90, 180],
+                            [-90, 180],
+                            [-90, -180]
+                        ];
+
+                        // Mask Layer
+                        L.polygon([worldBounds, phillyLatLngs], {
+                            color: 'transparent',
+                            fillColor: '#000',
+                            fillOpacity: 0.6, // Darker outside
+                            interactive: false,
+                            className: 'map-mask'
+                        }).addTo(map);
+
+                        // Bring border to front
+                        layer.bringToFront();
+
+                        // Fit bounds to the actual city shape
+                        map.fitBounds(layer.getBounds(), { padding: [20, 20] });
+
+                        // Store detailed bounds for reset
+                        // phillyBounds = layer.getBounds(); // Update global if needed, but we used const
+                    }
+                })
+                .catch(err => {
+                    console.error('Error loading map boundary:', err);
+                    // Fallback to rectangle if fetch fails
+                    L.rectangle(phillyBounds, { color: '#ff4d00', weight: 2, fill: false }).addTo(map);
+                });
 
             // Ensure map renders correctly after load
             setTimeout(() => {
@@ -357,7 +398,7 @@
                 card.innerHTML = `
                     <div class="card-image-wrapper" style="height: 200px; position:relative; overflow:hidden;">
                         <img src="${prop.image}" alt="${prop.address}" style="width:100%; height:100%; object-fit:cover; transition: transform 0.5s ease;">
-                        <div style="position: absolute; top: 12px; left: 12px; background: white; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase;">
+                        <div style="position: absolute; top: 12px; left: 12px; background: white; padding: 4px 8px; border-radius: 0; font-size: 10px; font-weight: 700; text-transform: uppercase;">
                             ${prop.type}
                         </div>
                     </div>
@@ -508,8 +549,8 @@
                     <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%); display: flex; flex-direction: column; justify-content: flex-end; padding: 40px;">
                          <div style="max-width: 1100px; margin: 0 auto; width: 100%;">
                              <div style="display: flex; gap: 12px; margin-bottom: 12px;">
-                                <span style="background: var(--accent-color); color: white; padding: 6px 12px; text-transform: uppercase; font-size: 11px; font-weight: 700; border-radius: 4px;">For Rent</span>
-                                <span style="background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); color: white; padding: 6px 12px; text-transform: uppercase; font-size: 11px; font-weight: 700; border-radius: 4px;">${prop.type}</span>
+                                <span style="background: var(--accent-color); color: white; padding: 6px 12px; text-transform: uppercase; font-size: 11px; font-weight: 700; border-radius: 0;">For Rent</span>
+                                <span style="background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); color: white; padding: 6px 12px; text-transform: uppercase; font-size: 11px; font-weight: 700; border-radius: 0;">${prop.type}</span>
                              </div>
                              <h1 style="color: white; font-size: 36px; line-height: 1.1; font-weight: 800; margin: 0 0 10px 0; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">${prop.address}</h1>
                              
@@ -552,7 +593,7 @@
                                 <h3 style="font-size: 11px; font-weight: 800; color: var(--accent-color); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px;">Property Features</h3>
                                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px;">
                                      ${prop.amenities.map(a => `
-                                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: #f9f9f9; border-radius: 6px;">
+                                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: #f9f9f9; border-radius: 0;">
                                             <div style="width: 6px; height: 6px; background: var(--accent-color); border-radius: 50%;"></div>
                                             <span style="font-size: 13px; font-weight: 600; color: #333;">${a}</span>
                                         </div>
@@ -563,7 +604,7 @@
 
                         <!-- Sidebar -->
                         <div class="detail-sidebar">
-                            <div style="background: white; border: 1px solid #e6e6e6; padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); position: sticky; top: 80px;">
+                            <div style="background: white; border: 1px solid #e6e6e6; padding: 30px; border-radius: 0; box-shadow: 0 10px 30px rgba(0,0,0,0.06); position: sticky; top: 80px;">
                                 <div style="text-align: center; margin-bottom: 20px;">
                                     <h3 style="font-size: 18px; margin-bottom: 6px;">Interested?</h3>
                                     <p style="font-size: 13px; color: #666;">Schedule a tour or request an application.</p>
@@ -571,13 +612,13 @@
                                 
                                 <form onsubmit="event.preventDefault(); alert('Request Sent!');">
                                     <div style="display: flex; flex-direction: column; gap: 12px;">
-                                        <input type="text" placeholder="Full Name" style="width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; background: #fafafa;">
-                                        <input type="tel" placeholder="Phone Number" style="width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; background: #fafafa;">
-                                        <input type="email" placeholder="Email Address" style="width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; background: #fafafa;">
+                                        <input type="text" placeholder="Full Name" style="width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 0; font-size: 14px; background: #fafafa;">
+                                        <input type="tel" placeholder="Phone Number" style="width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 0; font-size: 14px; background: #fafafa;">
+                                        <input type="email" placeholder="Email Address" style="width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 0; font-size: 14px; background: #fafafa;">
                                     </div>
                                     
-                                    <button style="width: 100%; background: var(--text-color); color: white; border: none; padding: 16px; font-weight: 800; text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em; border-radius: 6px; cursor: pointer; margin-top: 20px; transition: background 0.2s;">Schedule Tour</button>
-                                    <button style="width: 100%; background: transparent; color: var(--text-color); border: 1px solid var(--border-color); padding: 16px; font-weight: 800; text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em; border-radius: 6px; cursor: pointer; margin-top: 10px;">Apply Now</button>
+                                    <button style="width: 100%; background: var(--text-color); color: white; border: none; padding: 16px; font-weight: 800; text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em; border-radius: 0; cursor: pointer; margin-top: 20px; transition: background 0.2s;">Schedule Tour</button>
+                                    <button style="width: 100%; background: transparent; color: var(--text-color); border: 1px solid var(--border-color); padding: 16px; font-weight: 800; text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em; border-radius: 0; cursor: pointer; margin-top: 10px;">Apply Now</button>
                                 </form>
                             </div>
                         </div>
