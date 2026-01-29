@@ -42,28 +42,47 @@
             background: #000;
         }
     </style>
+    <link rel="stylesheet" href="css/te-nav-mobile.css">
+
+    <script>
+        function toggleMobileNav() {
+            document.querySelector('.main-nav').classList.toggle('active');
+            document.querySelector('.mobile-menu-toggle').classList.toggle('active');
+        }
+    </script>
 </head>
 
-<body>
+<body style="height: 100vh; display: flex; flex-direction: column; overflow: hidden;">
 
-    <div class="container app-container" style="max-width: 100%; border: none;">
+    <!-- Wrapper for fixed layout -->
+    <div class="container app-container"
+        style="max-width: 100%; border: none; height: 100%; display: flex; flex-direction: column;">
+
+        <!-- Header -->
         <header
-            style="background: #1a1a1a; color: white; border-bottom: none; padding: 15px 30px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
-            <a href="index.html" class="brand" style="color: white; text-decoration: none;">
-                Jahmir G. Realty
+            style="background: #1a1a1a; color: white; border-bottom: none; padding: 15px 30px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1100;">
+            <a href="https://www.instagram.com/jahmirphiladelphiarealtor/" target="_blank" class="brand"
+                style="color: white; text-decoration: none;">
+                Jahmir Grose Realty
                 <span class="sub" style="color: #888;">Philadelphia Rentals</span>
             </a>
-            <nav style="display: flex; gap: 20px; align-items: center;">
+
+            <button class="mobile-menu-toggle" onclick="toggleMobileNav()" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+            <nav class="main-nav" style="display: flex; gap: 20px; align-items: center;">
                 <a href="index.html"
                     style="color: white; text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--accent-color);">Properties</a>
                 <a href="form.html"
                     style="color: rgba(255,255,255,0.7); text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; transition: color 0.2s;"
                     onmouseover="this.style.color='white'"
                     onmouseout="this.style.color='rgba(255,255,255,0.7)'">Form</a>
-                <a href="https://www.instagram.com/jahmirphiladelphiarealtor/" target="_blank"
-                    style="color: rgba(255,255,255,0.7); text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; transition: color 0.2s;"
-                    onmouseover="this.style.color='white'"
-                    onmouseout="this.style.color='rgba(255,255,255,0.7)'">Instagram</a>
+                <a href="admin.html"
+                    style="color: #ff4d00; text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; transition: color 0.2s;"
+                    onmouseover="this.style.color='white'" onmouseout="this.style.color='#ff4d00'">Admin (Temp)</a>
             </nav>
         </header>
 
@@ -71,7 +90,7 @@
 
             <!-- Left: Content (Properties - Primary Focus) -->
             <div id="content-panel"
-                style="width: 65%; height: 100%; overflow-y: auto; background: #fff; display: flex; flex-direction: column; border-right: 1px solid var(--border-color);">
+                style="height: 100%; overflow-y: auto; background: #fff; display: flex; flex-direction: column; border-right: 1px solid var(--border-color);">
 
                 <!-- Filters Section -->
                 <div class="filters-container"
@@ -79,7 +98,7 @@
 
                     <!-- Top Row: Search (Prominent) -->
                     <div style="display: grid; grid-template-columns: 1fr auto; gap: 12px; margin-bottom: 20px;">
-                        <input type="text" id="filter-search" placeholder="Search by city, zip, or address..."
+                        <input type="text" id="filter-search" placeholder="Search by neighborhood, zip, or address"
                             style="width: 100%; padding: 12px 16px; background: #fff; border: 1px solid var(--border-color); font-size: 14px; height: 48px; font-weight: 500;">
                         <button
                             style="padding: 0 24px; background: var(--accent-color); color: white; border: none; font-weight: 700; text-transform: uppercase; font-size: 11px; height: 48px; cursor: pointer; letter-spacing: 0.05em;">Search</button>
@@ -91,7 +110,7 @@
                         <div>
                             <select id="filter-available" class="filter-select"
                                 style="height: 42px; border-color: var(--light-border); color: var(--text-color); font-weight: 500;">
-                                <option value="">Available</option>
+                                <option value="">Move-in Date</option>
                                 <option value="now">Now</option>
                                 <option value="2026-01">Jan 2026</option>
                                 <option value="2026-02">Feb 2026</option>
@@ -103,7 +122,7 @@
                         <div>
                             <select id="filter-price" class="filter-select"
                                 style="height: 42px; border-color: var(--light-border); color: var(--text-color); font-weight: 500;">
-                                <option value="">Rent</option>
+                                <option value="">Monthly Rent</option>
                                 <option value="0-1425">$0 - $1425</option>
                                 <option value="1435-1520">$1435 - $1520</option>
                                 <option value="1550-1750">$1550 - $1750</option>
@@ -133,17 +152,18 @@
                     </div>
 
                     <!-- Bottom Row: Meta (Results & Sort) -->
+                    <!-- Bottom Row: Meta (Results & Sort) -->
                     <div
-                        style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f0f0f0; padding-top: 16px;">
+                        style="display: flex; justify-content: space-between; gap: 20px; align-items: center; border-top: 1px solid #f0f0f0; padding-top: 16px;">
                         <span id="results-count"
-                            style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-color);">Loading...</span>
+                            style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-color); white-space: nowrap;">Loading...</span>
 
                         <div
-                            style="display: flex; gap: 8px; align-items: center; font-size: 11px; text-transform: uppercase;">
-                            <span style="color: var(--muted-color); font-weight: 500;">Sort by</span>
+                            style="display: flex; gap: 8px; align-items: center; font-size: 11px; text-transform: uppercase; white-space: nowrap;">
+                            <span style="color: var(--muted-color); font-weight: 500;">Sort by:</span>
                             <select id="sort-results"
                                 style="border: none; background: transparent; font-weight: 700; cursor: pointer; padding: 0 16px 0 0; color: var(--text-color); outline:none; width: auto; font-size: 11px; text-transform: uppercase;">
-                                <option value="newest">Newest on-market</option>
+                                <option value="newest">Newest Listings</option>
                                 <option value="available">Soonest available</option>
                                 <option value="price_asc">Lowest to highest rent</option>
                                 <option value="price_desc">Highest to lowest rent</option>
@@ -178,7 +198,7 @@
             </div>
 
             <!-- Right: Map (Secondary) -->
-            <div id="map-panel" style="width: 35%; height: 100%; position: relative;">
+            <div id="map-panel" style="height: 100%; position: relative;">
                 <div id="map-status" class="map-status">Loading map...</div>
 
                 <div id="map" style="width: 100%; height: 100%;"></div>
@@ -194,7 +214,8 @@
 
     <script>
         // --- STATE ---
-        let filteredProperties = [...properties];
+        let allProperties = [...properties];
+        let filteredProperties = [...allProperties];
 
         // --- DOM ---
         const gridEl = document.getElementById('property-grid');
@@ -397,14 +418,26 @@
                 const card = document.createElement('div');
                 card.className = 'property-card-rich';
 
-                const isPetFriendly = prop.amenities.some(a => /pet|cat|dog/i.test(a));
+                // Data Normalization (Handle Old & New Schema)
+                const image = prop.photos ? (prop.photos[0]?.url || 'images/placeholder.jpg') : prop.image;
+                const price = prop.monthly_rent ? `$${prop.monthly_rent.toLocaleString()}` : prop.price;
+                const address = prop.location ? `${prop.location.address_line_1}, ${prop.location.city}` : prop.address;
+                const beds = prop.beds ?? prop.bedrooms;
+                const baths = prop.baths ?? prop.bathrooms;
+                const sqft = prop.square_feet ?? prop.sqft;
+
+                // Amenities - Handle Array vs Object
+                let isPetFriendly = false;
+                if (prop.pets) { // New Scheme
+                    isPetFriendly = prop.pets.cats || prop.pets.small_dogs || prop.pets.large_dogs;
+                } else if (Array.isArray(prop.amenities)) { // Old Scheme
+                    isPetFriendly = prop.amenities.some(a => /pet|cat|dog/i.test(a));
+                }
 
                 card.innerHTML = `
                     <div class="card-image-wrapper" style="height: 200px; position:relative; overflow:hidden;">
-                        <img src="${prop.image}" alt="${prop.address}" style="width:100%; height:100%; object-fit:cover; transition: transform 0.5s ease;">
-                        <div style="position: absolute; top: 12px; left: 12px; background: white; padding: 4px 8px; border-radius: 0; font-size: 10px; font-weight: 700; text-transform: uppercase;">
-                            ${prop.type}
-                        </div>
+                        <img src="${image}" alt="${address}" style="width:100%; height:100%; object-fit:cover; transition: transform 0.5s ease;">
+                         ${prop.status && prop.status !== 'active' ? `<div style="position:absolute; top:10px; right:10px; background:#1a1a1a; color:white; padding:4px 8px; font-size:10px; text-transform:uppercase; font-weight:700;">${prop.status}</div>` : ''}
                     </div>
                     
                     <div class="card-content" style="padding: 16px;">
@@ -412,23 +445,23 @@
                         <!-- Price & Address -->
                         <div style="margin-bottom: 12px;">
                             <div style="font-size: 18px; font-weight: 800; color: var(--text-color); margin-bottom: 2px;">
-                                ${prop.price} <span style="font-size: 12px; font-weight: 500; color: #666;">/mo</span>
+                                ${price} <span style="font-size: 12px; font-weight: 500; color: #666;">/mo</span>
                             </div>
-                            <h3 style="font-size: 13px; font-weight: 500; color: #444; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: none;">${prop.address}</h3>
+                            <h3 style="font-size: 13px; font-weight: 500; color: #444; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: none;">${address}</h3>
                         </div>
 
                         <!-- Stats Grid -->
                         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #f0f0f0;">
                             <div style="text-align: center;">
-                                <div style="font-weight: 800; font-size: 13px;">${prop.bedrooms}</div>
+                                <div style="font-weight: 800; font-size: 13px;">${beds}</div>
                                 <div style="font-size: 9px; text-transform: uppercase; color: #888;">Bed</div>
                             </div>
                             <div style="text-align: center;">
-                                <div style="font-weight: 800; font-size: 13px;">${prop.bathrooms}</div>
+                                <div style="font-weight: 800; font-size: 13px;">${baths}</div>
                                 <div style="font-size: 9px; text-transform: uppercase; color: #888;">Bath</div>
                             </div>
                             <div style="text-align: center;">
-                                <div style="font-weight: 800; font-size: 13px;">${prop.sqft}</div>
+                                <div style="font-weight: 800; font-size: 13px;">${sqft}</div>
                                 <div style="font-size: 9px; text-transform: uppercase; color: #888;">Sqft</div>
                             </div>
                              <div style="text-align: center;">
@@ -485,7 +518,7 @@
             const petsVal = filters.pets.value;
             const availVal = filters.available.value;
 
-            filteredProperties = properties.filter(p => {
+            filteredProperties = allProperties.filter(p => {
                 // Search
                 if (term && !p.address.toLowerCase().includes(term)) return false;
 
@@ -543,7 +576,7 @@
 
         // --- DETAIL VIEW LOGIC ---
         function openDetail(id) {
-            const prop = properties.find(p => p.id === id);
+            const prop = allProperties.find(p => p.id === id);
             if (!prop) return;
 
             // Simple Detail Template
@@ -554,7 +587,7 @@
                          <div style="max-width: 1100px; margin: 0 auto; width: 100%;">
                              <div style="display: flex; gap: 12px; margin-bottom: 12px;">
                                 <span style="background: var(--accent-color); color: white; padding: 6px 12px; text-transform: uppercase; font-size: 11px; font-weight: 700; border-radius: 0;">For Rent</span>
-                                <span style="background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); color: white; padding: 6px 12px; text-transform: uppercase; font-size: 11px; font-weight: 700; border-radius: 0;">${prop.type}</span>
+
                              </div>
                              <h1 style="color: white; font-size: 36px; line-height: 1.1; font-weight: 800; margin: 0 0 10px 0; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">${prop.address}</h1>
                              
@@ -659,6 +692,21 @@
         searchBtn.addEventListener('click', filterProperties);
 
         // --- INIT ---
+
+        // Load Custom Data if available (from Admin Dashboard)
+        const storedProps = localStorage.getItem('jg_properties');
+        if (storedProps) {
+            try {
+                const custom = JSON.parse(storedProps);
+                if (Array.isArray(custom) && custom.length > 0) {
+                    allProperties = custom; // Update global state
+                    filteredProperties = [...allProperties]; // Reset filtered view
+                }
+            } catch (e) {
+                console.error("Error loading custom data", e);
+            }
+        }
+
         initMap();
         renderGrid();
         if (map) {

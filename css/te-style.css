@@ -462,7 +462,6 @@ footer {
         border-right: none;
     }
 
-
     .sidebar {
         width: 280px;
     }
@@ -487,31 +486,86 @@ footer {
         font-size: 9px;
     }
 
+    /* Generic Split Layout Stacking */
     .split-layout {
-        flex-direction: column-reverse;
-        /* Map on top (sidebar), List on bottom (form-panel) in this layout logic? actually sidebar is usually map tools, main is map. Let's adjust for this specific app */
-        height: auto;
-        overflow: visible;
+        flex-direction: column;
+        height: auto !important;
+        /* Allow growing */
+        overflow: visible !important;
     }
 
+    /* Determine order for map vs form */
+    /* By default column puts sidebar first. */
+
+    /* Common Sidebar Mobile Styles */
     .sidebar {
-        width: 100%;
+        width: 100% !important;
+        height: auto !important;
         border-left: none;
         border-right: none;
         border-top: 1px solid var(--border-color);
-        padding: 0;
         border-bottom: 1px solid var(--border-color);
-        height: 50vh;
-        /* Half screen for list on mobile? */
+        padding: 0;
+        flex: none;
+        /* Don't expand to fill height specifically */
     }
 
+    /* Form Specific Nav Styling (Horizontal Scroll) */
+    .sidebar nav {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .nav-item {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 15px 10px;
+        min-width: auto;
+        border-bottom: none;
+        border-right: 1px solid var(--border-color);
+        border-left: none;
+        border-top: 4px solid transparent;
+        /* Prepare for active state */
+        gap: 6px;
+        text-align: center;
+        width: auto;
+        flex: 1;
+        /* Distribute evenly if possible, or scroll */
+        min-width: 80px;
+    }
+
+    .nav-item:last-child {
+        border-right: none;
+    }
+
+    .nav-item.active {
+        border-left: none;
+        border-top: 4px solid var(--accent-color);
+        margin-right: 0;
+        margin-bottom: -1px;
+        background: #fff;
+    }
+
+    .nav-item .nav-title {
+        display: none;
+        /* Hide titles on small mobile to save space, or show if they fit */
+    }
+
+    .step-number {
+        width: 24px;
+        height: 24px;
+        font-size: 11px;
+    }
 
     .form-panel {
         padding: 20px;
-        height: 50vh;
-        /* Map height on mobile */
+        height: auto !important;
+        overflow: visible;
+        flex: 1;
     }
-
 
     footer {
         padding: 15px;
@@ -523,93 +577,22 @@ footer {
     .footer-links {
         justify-content: center;
     }
-}
 
-/* Small mobile */
-@media (max-width: 480px) {
-    header {
-        padding: 12px;
+    /* Fix Map Page specifically in this query if needed */
+    #content-panel {
+        width: 100% !important;
+        height: 50vh !important;
+        /* Half screen list */
+        overflow-y: auto;
     }
 
-    .brand {
-        font-size: 12px;
+    #map-panel {
+        width: 100% !important;
+        height: 50vh !important;
+        /* Half screen map */
+        flex: none !important;
+        min-height: 0 !important;
     }
-
-    .brand span.sub {
-        font-size: 9px;
-    }
-
-    .status-indicator {
-        font-size: 8px;
-        gap: 6px;
-    }
-
-    .indicator-dot {
-        width: 6px;
-        height: 6px;
-    }
-
-    .sidebar,
-    .form-panel {
-        padding: 0;
-    }
-
-    input[type="text"],
-    input[type="email"],
-    input[type="tel"],
-    textarea {
-        padding: 10px;
-        font-size: 16px;
-        /* Prevents zoom on iOS */
-    }
-
-    .btn-submit {
-        padding: 14px;
-        font-size: 11px;
-    }
-
-    footer {
-        padding: 12px;
-        font-size: 9px;
-    }
-
-    .footer-links {
-        gap: 15px;
-    }
-}
-
-/* Accessibility and touch improvements */
-@media (hover: none) and (pointer: coarse) {
-
-    /* Touch device optimizations */
-    .btn-submit,
-    .back-link,
-    .option-btn,
-    .nav-item {
-        min-height: 44px;
-        /* iOS recommended touch target size */
-        min-width: 44px;
-    }
-
-    input[type="checkbox"],
-    input[type="radio"] {
-        min-width: 24px;
-        min-height: 24px;
-    }
-}
-
-
-/* Button group mobile optimization */
-@media (max-width: 640px) {
-    .button-group {
-        gap: 6px !important;
-    }
-
-    .option-btn {
-        font-size: 11px !important;
-        padding: 8px 12px !important;
-    }
-
 }
 
 /* PROPERTY SPECIFIC STYLES */
@@ -653,8 +636,14 @@ footer {
     font-weight: 600;
 }
 
+/* Default Desktop Widths (replaces inline styles) */
+#content-panel {
+    width: 65%;
+}
+
 /* Map specific override - to make sure map takes full height */
 #map-panel {
+    width: 35%;
     flex: 0 0 35%;
     min-width: 320px;
     height: 100%;

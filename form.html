@@ -47,31 +47,45 @@
         }
     </style>
 
+    <link rel="stylesheet" href="css/te-nav-mobile.css">
+    <script>
+        function toggleMobileNav() {
+            document.querySelector('.main-nav').classList.toggle('active');
+            document.querySelector('.mobile-menu-toggle').classList.toggle('active');
+        }
+    </script>
 </head>
 
 <body>
     <div class="container app-container" style="max-width: 100%; border: none;">
         <header
-            style="background: #1a1a1a; color: white; border-bottom: none; padding: 15px 30px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
-            <a href="index.html" class="brand" style="color: white; text-decoration: none;">
-                Jahmir G. Realty
+            style="background: #1a1a1a; color: white; border-bottom: none; padding: 15px 30px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1100;">
+            <a href="https://www.instagram.com/jahmirphiladelphiarealtor/" target="_blank" class="brand"
+                style="color: white; text-decoration: none;">
+                Jahmir Grose Realty
                 <span class="sub" style="color: #888;">Philadelphia Rentals</span>
             </a>
-            <nav style="display: flex; gap: 20px; align-items: center;"><a href="index.html"
+
+            <button class="mobile-menu-toggle" onclick="toggleMobileNav()" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+            <nav class="main-nav" style="display: flex; gap: 20px; align-items: center;"><a href="index.html"
                     style="color: rgba(255,255,255,0.7); text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; transition: color 0.2s;"
                     onmouseover="this.style.color='white'"
                     onmouseout="this.style.color='rgba(255,255,255,0.7)'">Properties</a><a href="form.html"
                     style="color: white; text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--accent-color);">Form</a>
-                <a href="https://www.instagram.com/jahmirphiladelphiarealtor/" target="_blank"
-                    style="color: rgba(255,255,255,0.7); text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; transition: color 0.2s;"
-                    onmouseover="this.style.color='white'"
-                    onmouseout="this.style.color='rgba(255,255,255,0.7)'">Instagram</a>
+                <a href="admin.html"
+                    style="color: #ff4d00; text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; transition: color 0.2s;"
+                    onmouseover="this.style.color='white'" onmouseout="this.style.color='#ff4d00'">Admin (Temp)</a>
             </nav>
         </header>
         <div class="split-layout"
             style="margin: 0 auto; max-width: 1200px; width: 100%; border-right: 1px solid var(--border-color); border-left: 1px solid var(--border-color);">
             <!-- Left Sidebar: Context -->
-            <div class="sidebar" style="padding: 0; display: flex; flex-direction: column;">
+            <div class="sidebar">
                 <nav style="flex: 1;"><button class="nav-item active" onclick="switchSection(1)" data-section="1">
                         <div class="step-number">1</div>
                         <div class="nav-title">Contact Information</div>

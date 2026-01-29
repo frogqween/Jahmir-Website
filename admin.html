@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- HEAD -->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jahmir Grose Realty - Admin</title>
+    <link rel="stylesheet" href="css/te-style.css">
+    <link rel="stylesheet" href="css/te-nav-mobile.css">
+    <style>
+        /* Admin Specific Styles */
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .admin-table th {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 2px solid var(--border-color);
+            text-transform: uppercase;
+            font-size: 11px;
+            color: var(--muted-color);
+        }
+
+        .admin-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .action-btn-sm {
+            padding: 6px 12px;
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: 700;
+            border: 1px solid var(--border-color);
+            background: white;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+        .action-btn-sm:hover {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .action-btn-sm.delete:hover {
+            background: #ff0000;
+            border-color: #ff0000;
+        }
+
+        .image-preview {
+            width: 100%;
+            height: 200px;
+            background: #f0f0f0;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 1px dashed var(--muted-color);
+            color: var(--muted-color);
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* New Button Group Styles from Form */
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .option-btn {
+            background: #fff;
+            border: 1px solid var(--light-border);
+            padding: 10px 16px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-color);
+            flex: 1;
+            min-width: 0;
+            text-align: center;
+        }
+
+        .option-btn:hover {
+            border-color: var(--text-color);
+        }
+
+        .option-btn.selected {
+            background: var(--text-color);
+            color: white;
+            border-color: var(--text-color);
+        }
+
+        .preference-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        /* Responsive Fixes */
+        @media (max-width: 768px) {
+            .split-layout {
+                flex-direction: column !important;
+                height: auto !important;
+                display: block !important;
+            }
+
+            .sidebar {
+                width: 100% !important;
+                border-right: none !important;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .container {
+                height: auto !important;
+                overflow: auto !important;
+            }
+
+            /* Force all split-grid-layouts in form to stack */
+            .split-layout[style*="display: grid"] {
+                display: flex !important;
+                flex-direction: column !important;
+            }
+
+            .option-btn {
+                padding: 10px 8px;
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container" style="max-height: 100vh; max-width: 100%; border: none;">
+        <header style="background: #1a1a1a; color: white;">
+            <div class="brand">
+                Jahmir Grose Realty
+                <span class="sub" style="color: #888;">Admin Dashboard</span>
+            </div>
+            <a href="index.html"
+                style="color: white; font-size: 11px; text-transform: uppercase; text-decoration: none;">&larr; Back to
+                Site</a>
+        </header>
+
+        <div class="split-layout">
+            <div class="sidebar">
+                <nav style="display: flex; flex-direction: column;">
+                    <button class="nav-item active" onclick="renderPropertyList()">
+                        <div class="step-number" style="background: #333;">L</div>
+                        <div class="nav-content">
+                            <div class="nav-label">Manage</div>
+                            <div class="nav-title">All Listings</div>
+                        </div>
+                    </button>
+                    <button class="nav-item" onclick="renderForm()">
+                        <div class="step-number">N</div>
+                        <div class="nav-content">
+                            <div class="nav-label">Action</div>
+                            <div class="nav-title">Add New Listing</div>
+                        </div>
+                    </button>
+                    <button class="nav-item" onclick="resetToDefault()">
+                        <div class="step-number">R</div>
+                        <div class="nav-content">
+                            <div class="nav-label">System</div>
+                            <div class="nav-title">Reset Data</div>
+                        </div>
+                    </button>
+                </nav>
+            </div>
+
+            <div class="form-panel" id="main-content">
+                <!-- Dynamic Content Loaded Here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Load defaults first -->
+    <script src="js/properties.js"></script>
+
+    <script>
+        // --- Admin Logic ---
+
+        // 1. Initialize Data Store
+        let dbProperties = [];
+
+        function initData() {
+            const stored = localStorage.getItem('jg_properties');
+            if (stored) {
+                dbProperties = JSON.parse(stored);
+            } else {
+                // Seed with default from properties.js variable 'properties'
+                if (typeof properties !== 'undefined') {
+                    dbProperties = [...properties];
+                    saveData();
+                }
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('jg_properties', JSON.stringify(dbProperties));
+        }
+
+        function resetToDefault() {
+            if (confirm("Are you sure? This will delete all your custom changes and restore the original demo data.")) {
+                localStorage.removeItem('jg_properties');
+                location.reload();
+            }
+        }
+
+        // 2. Render List View
+        function renderPropertyList() {
+            // Update active nav
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item')[0].classList.add('active');
+
+            const container = document.getElementById('main-content');
+
+            let html = `
+                <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <h2>Current Listings (${dbProperties.length})</h2>
+                    <button onclick="renderForm()" class="btn-submit" style="width: auto; padding: 10px 20px;">+ Add New</button>
+                </div>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Img</th>
+                            <th>Address</th>
+                            <th>Price</th>
+                            <th>Features</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            dbProperties.forEach(p => {
+                // Compatibility Reading
+                const img = (p.photos && p.photos.length > 0) ? p.photos[0].url : (p.image || '');
+                const addr = (p.location && p.location.address_line_1) ? p.location.address_line_1 : (p.address || 'No Address');
+                const price = p.monthly_rent ? `$${p.monthly_rent}` : (p.price || '');
+                const beds = p.beds !== undefined ? p.beds : (p.bedrooms || 0);
+                const baths = p.baths !== undefined ? p.baths : (p.bathrooms || 0);
+                const status = p.status ? `<span style="padding: 2px 6px; background: #eee; border-radius: 4px; font-size: 10px; margin-right: 5px;">${p.status.toUpperCase()}</span>` : '';
+
+                html += `
+                    <tr>
+                        <td style="width: 60px;">
+                            <img src="${img}" style="width: 40px; height: 40px; object-fit: cover; background: #eee;">
+                        </td>
+                        <td>
+                            ${status}
+                            <strong>${addr}</strong><br>
+                            <span style="font-size: 10px; color: #888;">ID: ${p.id}</span>
+                        </td>
+                        <td>${price}</td>
+                        <td>Incls: ${beds}bd / ${baths}ba</td>
+                        <td>
+                            <button class="action-btn-sm" onclick="editProperty(${p.id})">Edit</button>
+                            <button class="action-btn-sm delete" onclick="deleteProperty(${p.id})">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        // 3. Render Form View (Add/Edit)
+        function renderForm(id = null) {
+            // Update active nav
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item')[1].classList.add('active');
+
+            const isEdit = id !== null;
+            // Default Data Structure
+            let data = {
+                id: Date.now(),
+                status: 'active',
+                headline: '',
+                monthly_rent: '',
+                security_deposit: '',
+                application_fee: 0,
+                available_date: new Date().toISOString().split('T')[0],
+                lease_duration: 12,
+                month_to_month: false,
+                property_type: 'apartment',
+                year_built: '',
+                beds: 1,
+                baths: 1,
+                square_feet: '',
+                unit_identifier: '',
+                location: {
+                    address_line_1: '',
+                    address_line_2: '',
+                    city: 'Philadelphia',
+                    state: 'PA',
+                    zip: '',
+                    lat: 39.9526,
+                    lng: -75.1652
+                },
+                requirements: {
+                    min_income_multiplier: '3.0x',
+                    credit_check_required: true,
+                    background_check_required: true,
+                    income_verification_required: true,
+                    screening_required: false,
+                    notes: ''
+                },
+                amenities: {
+                    laundry: 'none',
+                    parking: 'street',
+                    air_conditioning: 'none',
+                    features: []
+                },
+                pets: {
+                    cats: false,
+                    small_dogs: false,
+                    large_dogs: false,
+                    other: false
+                },
+                contact: {
+                    name: 'Jahmir Grose',
+                    phone: '267-432-1172',
+                    email: ''
+                },
+                photos: []
+            };
+
+            if (isEdit) {
+                const found = dbProperties.find(p => p.id === id);
+                if (found) {
+                    if (!found.location && found.address) {
+                        data.location.address_line_1 = found.address;
+                        data.monthly_rent = parseInt(found.price.replace(/\\D/g, '')) || 0;
+                        data.beds = found.bedrooms;
+                        data.baths = found.bathrooms;
+                        data.square_feet = found.sqft;
+                        if (found.amenities && Array.isArray(found.amenities)) {
+                            data.amenities.features = found.amenities;
+                        }
+                        if (found.image) data.photos = [{ url: found.image, is_cover: true }];
+                    } else {
+                        data = { ...data, ...found };
+                        if (!data.location) data.location = {};
+                        if (!data.requirements) data.requirements = {};
+                        if (!data.amenities) data.amenities = {};
+                        if (!data.pets) data.pets = {};
+                        if (!data.contact) data.contact = {};
+                    }
+                }
+            }
+
+            const container = document.getElementById('main-content');
+
+            const sectionStyle = "margin-bottom: 40px; border: 1px solid #e0e0e0; padding: 20px; background: #fff;";
+            const sectionHeader = "font-size: 14px; font-weight: 800; text-transform: uppercase; margin-bottom: 20px; color: var(--accent-color); padding-bottom: 10px; border-bottom: 1px solid #eee;";
+
+            container.innerHTML = `
+                <div style="margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px;">
+                    <h2>${isEdit ? 'Edit Listing' : 'New Listing'}</h2>
+                </div>
+
+                <form onsubmit="handleSave(event, ${isEdit ? id : 'null'})">
+                    
+                    <!-- Photos -->
+                    <div style="${sectionStyle}">
+                        <div style="${sectionHeader}">Photos</div>
+                        <div class="input-group">
+                            <label class="input-label">Add Photo URL</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="inp-new-photo" placeholder="https://...">
+                                <button type="button" class="btn-submit" style="width: auto;" onclick="addPhoto()">Add</button>
+                            </div>
+                        </div>
+                        <div id="photo-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 10px;">
+                            ${data.photos.map((p, i) => `
+                                <div style="position: relative; height: 130px; border: 1px solid #ddd; background:#fff; display:flex; flex-direction:column;">
+                                    <div style="height: 100px; position:relative;">
+                                        <img src="${p.url}" style="width: 100%; height: 100%; object-fit: cover;">
+                                        <button type="button" onclick="removePhoto(${i})" style="position: absolute; top: 2px; right: 2px; background: red; color: white; border: none; width: 20px; height: 20px; z-index:2;">×</button>
+                                        ${i === 0 ? '<div style="position:absolute; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.6); color:white; font-size:10px; text-align:center; padding:2px;">COVER</div>' : ''}
+                                    </div>
+                                    <div style="flex:1; display:flex; border-top:1px solid #ddd;">
+                                        <button type="button" onclick="movePhoto(${i}, -1)" ${i === 0 ? 'disabled' : ''} style="flex:1; background:#f9f9f9; border:none; border-right:1px solid #ddd; cursor:pointer;" title="Move Left">&larr;</button>
+                                        <button type="button" onclick="movePhoto(${i}, 1)" ${i === data.photos.length - 1 ? 'disabled' : ''} style="flex:1; background:#f9f9f9; border:none; cursor:pointer;" title="Move Right">&rarr;</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <!-- Hidden storage for photos -->
+                        <input type="hidden" id="photo-data" value='${JSON.stringify(data.photos)}'>
+                    </div>
+
+                    <!-- A. Core Listing -->
+                    <div style="${sectionStyle}">
+                        <div style="${sectionHeader}">Core Details</div>
+                        <div class="split-layout" style="border:none; height:auto; gap: 20px; display: grid; grid-template-columns: 1fr 1fr; min-height: 0;">
+                            <div class="input-group">
+                                <label class="input-label">Status</label>
+                                <div class="button-group">
+                                    <input type="hidden" id="inp-status" value="${data.status}">
+                                    ${['draft', 'active', 'pending', 'rented'].map(opt => `
+                                        <button type="button" class="option-btn ${data.status === opt ? 'selected' : ''}" onclick="selectSingle(this, 'inp-status', '${opt}')">
+                                            ${opt.toUpperCase()}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">Available Date</label>
+                                <input type="date" id="inp-date" value="${data.available_date}">
+                            </div>
+                        </div>
+                        <div class="split-layout" style="border:none; height:auto; gap: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; min-height: 0;">
+                            <div class="input-group">
+                                <label class="input-label">Monthly Rent ($)</label>
+                                <input type="number" id="inp-rent" value="${data.monthly_rent}" required>
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">Security Deposit ($)</label>
+                                <input type="number" id="inp-deposit" value="${data.security_deposit}">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">Lease Duration</label>
+                                <div class="button-group" style="flex-wrap:nowrap;">
+                                    <input type="hidden" id="inp-lease" value="${data.lease_duration}">
+                                    ${[6, 12, 18, 24].map(opt => `
+                                        <button type="button" class="option-btn ${data.lease_duration == opt ? 'selected' : ''}" onclick="selectSingle(this, 'inp-lease', '${opt}')">
+                                            ${opt} M
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label">Headline (Marketing Title)</label>
+                            <input type="text" id="inp-headline" value="${data.headline || ''}" placeholder="e.g. Sunny Loft in Old City">
+                        </div>
+                    </div>
+
+                    <!-- B. Property Basics -->
+                    <div style="${sectionStyle}">
+                        <div style="${sectionHeader}">Property Basics</div>
+                        <div class="split-layout" style="border:none; height:auto; gap: 20px; display: grid; grid-template-columns: 1fr 1fr; min-height: 0;">
+                            <div class="input-group">
+                                <label class="input-label">Address Line 1</label>
+                                <input type="text" id="inp-addr1" value="${data.location.address_line_1}" required>
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">Unit (Opt)</label>
+                                <input type="text" id="inp-unit" value="${data.unit_identifier || ''}">
+                            </div>
+                        </div>
+                        <div class="split-layout" style="border:none; height:auto; gap: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; min-height: 0;">
+                            <div class="input-group">
+                                <label class="input-label">City</label>
+                                <input type="text" id="inp-city" value="${data.location.city}">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">State</label>
+                                <input type="text" id="inp-state" value="${data.location.state}">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">Zip</label>
+                                <input type="text" id="inp-zip" value="${data.location.zip}">
+                            </div>
+                        </div>
+                        <br>
+                        
+                        <div class="input-group">
+                            <label class="input-label">Property Type</label>
+                            <div class="button-group">
+                                <input type="hidden" id="inp-type" value="${data.property_type}">
+                                ${['apartment', 'house', 'condo', 'studio'].map(opt => `
+                                    <button type="button" class="option-btn ${data.property_type === opt ? 'selected' : ''}" onclick="selectSingle(this, 'inp-type', '${opt}')">
+                                        ${opt.charAt(0).toUpperCase() + opt.slice(1)}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div class="split-layout" style="border:none; height:auto; gap: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; min-height: 0;">
+                            <div class="input-group">
+                                <label class="input-label">Beds</label>
+                                <div class="button-group" style="flex-wrap: nowrap;">
+                                    <input type="hidden" id="inp-beds" value="${data.beds}">
+                                    ${[0, 1, 2, 3, 4].map(opt => `
+                                        <button type="button" class="option-btn ${data.beds == opt ? 'selected' : ''}" onclick="selectSingle(this, 'inp-beds', '${opt}')">
+                                            ${opt === 0 ? 'Studio' : opt}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">Baths</label>
+                                <div class="button-group" style="flex-wrap: nowrap;">
+                                    <input type="hidden" id="inp-baths" value="${data.baths}">
+                                    ${[1, 1.5, 2, 2.5, 3].map(opt => `
+                                        <button type="button" class="option-btn ${data.baths == opt ? 'selected' : ''}" onclick="selectSingle(this, 'inp-baths', '${opt}')">
+                                            ${opt}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                             <div class="input-group">
+                                <label class="input-label">Sq Ft</label>
+                                <input type="number" id="inp-sqft" value="${data.square_feet}" style="padding: 10px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Financial & Requirements -->
+                    <div style="${sectionStyle}">
+                        <div style="${sectionHeader}">Requirements</div>
+                        <div class="input-group">
+                            <label class="input-label">Min Income Multiplier (Rent x)</label>
+                             <div class="button-group">
+                                <input type="hidden" id="inp-income" value="${data.requirements.min_income_multiplier}">
+                                ${['2.0x', '2.5x', '3.0x', '3.5x'].map(opt => `
+                                    <button type="button" class="option-btn ${data.requirements.min_income_multiplier === opt ? 'selected' : ''}" onclick="selectSingle(this, 'inp-income', '${opt}')">
+                                        ${opt}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="input-group" style="margin-top:20px;">
+                            <label class="input-label">Required Checks</label>
+                            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                                <label class="checkbox-label"><input type="checkbox" id="inp-credit" ${data.requirements.credit_check_required ? 'checked' : ''}> Credit Check</label>
+                                <label class="checkbox-label"><input type="checkbox" id="inp-bg" ${data.requirements.background_check_required ? 'checked' : ''}> Background Check</label>
+                                <label class="checkbox-label"><input type="checkbox" id="inp-inc-verify" ${data.requirements.income_verification_required ? 'checked' : ''}> Income Verification</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- D. Amenities & Pets -->
+                    <div style="${sectionStyle}">
+                        <div style="${sectionHeader}">Features & Policy</div>
+                         <div class="split-layout" style="border:none; height:auto; gap: 20px; display: grid; grid-template-columns: 1fr; min-height: 0;">
+                            <div class="input-group">
+                                <label class="input-label">Laundry</label>
+                                <div class="button-group">
+                                    <input type="hidden" id="inp-laundry" value="${data.amenities.laundry}">
+                                    ${['none', 'in_unit', 'shared', 'hookups'].map(opt => `
+                                        <button type="button" class="option-btn ${data.amenities.laundry === opt ? 'selected' : ''}" onclick="selectSingle(this, 'inp-laundry', '${opt}')">
+                                            ${opt.replace('_', ' ').toUpperCase()}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">Parking</label>
+                                <div class="button-group">
+                                    <input type="hidden" id="inp-parking" value="${data.amenities.parking || 'street'}">
+                                    ${['street', 'garage', 'driveway', 'none'].map(opt => `
+                                        <button type="button" class="option-btn ${(data.amenities.parking || 'street') === opt ? 'selected' : ''}" onclick="selectSingle(this, 'inp-parking', '${opt}')">
+                                            ${opt.toUpperCase()}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">AC</label>
+                                <div class="button-group">
+                                    <input type="hidden" id="inp-ac" value="${data.amenities.air_conditioning}">
+                                    ${['none', 'central', 'window_unit', 'mini_split'].map(opt => `
+                                        <button type="button" class="option-btn ${data.amenities.air_conditioning === opt ? 'selected' : ''}" onclick="selectSingle(this, 'inp-ac', '${opt}')">
+                                            ${opt.replace('_', ' ').toUpperCase()}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="input-group" style="margin-top: 20px;">
+                             <label class="input-label">Features</label>
+                             <div class="button-group preference-grid">
+                                ${['Hardwood Floors', 'Dishwasher', 'Elevator', 'Gym', 'Doorman', 'Patio/Balcony', 'Roof Deck', 'Garage Parking'].map(feat => `
+                                    <button type="button" class="option-btn feature-toggle ${data.amenities.features.includes(feat) ? 'selected' : ''}" 
+                                        onclick="toggleFeature(this)" data-value="${feat}">
+                                        ${feat}
+                                    </button>
+                                `).join('')}
+                             </div>
+                        </div>
+
+                        <div class="input-group" style="margin-top: 20px;">
+                             <label class="input-label">Pets Allowed</label>
+                             <div style="display: flex; gap: 15px;">
+                                <label class="checkbox-label"><input type="checkbox" id="inp-cat" ${data.pets.cats ? 'checked' : ''}> Cats</label>
+                                <label class="checkbox-label"><input type="checkbox" id="inp-s-dog" ${data.pets.small_dogs ? 'checked' : ''}> Small Dogs</label>
+                                <label class="checkbox-label"><input type="checkbox" id="inp-l-dog" ${data.pets.large_dogs ? 'checked' : ''}> Large Dogs</label>
+                             </div>
+                        </div>
+                    </div>
+                
+
+
+                    <div style="margin-top: 30px; display: flex; gap: 10px; position: sticky; bottom: 0; background: white; padding: 20px; border-top: 1px solid #eee; z-index: 10;">
+                        <button type="submit" class="btn-submit" style="background: var(--accent-color); color: white;">Save Listing</button>
+                        <button type="button" class="btn-submit" style="background: transparent; color: #333; border: 1px solid #333;" onclick="renderPropertyList()">Cancel</button>
+                    </div>
+                </form>
+            `;
+        }
+
+        // --- Helpers for Button Logic ---
+        function selectSingle(btn, inputId, value) {
+            // Deselect siblings
+            const group = btn.parentElement;
+            group.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+            // Select clicked
+            btn.classList.add('selected');
+            // Update hidden input
+            document.getElementById(inputId).value = value;
+        }
+
+        function toggleFeature(btn) {
+            btn.classList.toggle('selected');
+        }
+
+        // Photo Logic
+        function addPhoto() {
+            const inp = document.getElementById('inp-new-photo');
+            const url = inp.value.trim();
+            if (!url) return;
+
+            const current = JSON.parse(document.getElementById('photo-data').value);
+            current.push({ url: url, is_cover: current.length === 0 });
+
+            document.getElementById('photo-data').value = JSON.stringify(current);
+            // Re-render list slightly hacky
+            renderPhotoList(current);
+            inp.value = '';
+        }
+
+        function removePhoto(index) {
+            const current = JSON.parse(document.getElementById('photo-data').value);
+            current.splice(index, 1);
+            document.getElementById('photo-data').value = JSON.stringify(current);
+            renderPhotoList(current);
+        }
+
+        function renderPhotoList(photos) {
+            const list = document.getElementById('photo-list');
+            list.innerHTML = photos.map((p, i) => `
+                <div style="position: relative; height: 130px; border: 1px solid #ddd; background:#fff; display:flex; flex-direction:column;">
+                    <div style="height: 100px; position:relative;">
+                        <img src="${p.url}" style="width: 100%; height: 100%; object-fit: cover;">
+                        <button type="button" onclick="removePhoto(${i})" style="position: absolute; top: 2px; right: 2px; background: red; color: white; border: none; width: 20px; height: 20px; z-index:2;">×</button>
+                        ${i === 0 ? '<div style="position:absolute; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.6); color:white; font-size:10px; text-align:center; padding:2px;">COVER</div>' : ''}
+                    </div>
+                    <div style="flex:1; display:flex; border-top:1px solid #ddd;">
+                        <button type="button" onclick="movePhoto(${i}, -1)" ${i === 0 ? 'disabled' : ''} style="flex:1; background:#f9f9f9; border:none; border-right:1px solid #ddd; cursor:pointer;" title="Move Left">&larr;</button>
+                        <button type="button" onclick="movePhoto(${i}, 1)" ${i === photos.length - 1 ? 'disabled' : ''} style="flex:1; background:#f9f9f9; border:none; cursor:pointer;" title="Move Right">&rarr;</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function movePhoto(index, direction) {
+            const current = JSON.parse(document.getElementById('photo-data').value);
+            const newIndex = index + direction;
+            if (newIndex >= 0 && newIndex < current.length) {
+                // Swap
+                [current[index], current[newIndex]] = [current[newIndex], current[index]];
+                // Set cover
+                current.forEach((p, idx) => p.is_cover = (idx === 0));
+
+                document.getElementById('photo-data').value = JSON.stringify(current);
+                renderPhotoList(current);
+            }
+        }
+
+        function handleSave(e, id) {
+            e.preventDefault();
+
+            // Collect features from selected buttons
+            const selectedFeatures = Array.from(document.querySelectorAll('.feature-toggle.selected'))
+                .map(btn => btn.getAttribute('data-value'));
+
+            // Gather Data
+            const formData = {
+                id: id || Date.now(),
+                status: document.getElementById('inp-status').value,
+                headline: document.getElementById('inp-headline').value,
+                monthly_rent: parseInt(document.getElementById('inp-rent').value),
+                security_deposit: parseInt(document.getElementById('inp-deposit').value) || 0,
+                application_fee: parseInt(document.getElementById('inp-fee').value) || 0,
+                available_date: document.getElementById('inp-date').value,
+                lease_duration: parseInt(document.getElementById('inp-lease').value),
+
+                location: {
+                    address_line_1: document.getElementById('inp-addr1').value,
+                    city: document.getElementById('inp-city').value,
+                    state: document.getElementById('inp-state').value,
+                    zip: document.getElementById('inp-zip').value,
+                    // Preserve or fetch
+                    lat: 39.9526,
+                    lng: -75.1652
+                },
+
+                property_type: document.getElementById('inp-type').value,
+                beds: parseFloat(document.getElementById('inp-beds').value),
+                baths: parseFloat(document.getElementById('inp-baths').value),
+                square_feet: parseInt(document.getElementById('inp-sqft').value) || 0,
+                unit_identifier: document.getElementById('inp-unit').value,
+
+                requirements: {
+                    min_income_multiplier: document.getElementById('inp-income').value,
+                    credit_check_required: document.getElementById('inp-credit').checked,
+                    background_check_required: document.getElementById('inp-bg').checked,
+                    income_verification_required: document.getElementById('inp-inc-verify').checked,
+                    screening_required: false,
+                    notes: ''
+                },
+
+                amenities: {
+                    laundry: document.getElementById('inp-laundry').value,
+                    air_conditioning: document.getElementById('inp-ac').value,
+                    parking: document.getElementById('inp-parking').value,
+                    features: selectedFeatures
+                },
+
+                pets: {
+                    cats: document.getElementById('inp-cat').checked,
+                    small_dogs: document.getElementById('inp-s-dog').checked,
+                    large_dogs: document.getElementById('inp-l-dog').checked
+                },
+
+                photos: JSON.parse(document.getElementById('photo-data').value),
+                contact: {
+                    name: "Jahmir Grose",
+                    phone: "267-432-1172"
+                }
+            };
+
+            // Maintain existing data if editing
+            if (id) {
+                const index = dbProperties.findIndex(p => p.id === id);
+                if (index !== -1) {
+                    dbProperties[index] = { ...dbProperties[index], ...formData };
+                }
+            } else {
+                dbProperties.unshift(formData);
+            }
+
+            saveData();
+            alert('Listing saved successfully!');
+            renderPropertyList();
+        }
+
+        function editProperty(id) {
+            renderForm(id);
+        }
+
+        function deleteProperty(id) {
+            if (confirm('Are you sure you want to delete this listing?')) {
+                dbProperties = dbProperties.filter(p => p.id !== id);
+                saveData();
+                renderPropertyList();
+            }
+        }
+
+        // --- Init ---
+        initData();
+        renderPropertyList();
+
+    </script>
+</body>
+
+</html>

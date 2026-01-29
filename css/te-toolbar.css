@@ -1,0 +1,83 @@
+/* Results & Sort Toolbar */
+.results-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--light-border);
+    padding-top: 20px;
+    margin-top: 5px;
+    gap: 20px;
+    flex-wrap: nowrap;
+}
+
+.results-count {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--text-color);
+    white-space: nowrap;
+    letter-spacing: 0.05em;
+}
+
+.sort-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    position: relative;
+    background: #f4f4f4;
+    /* Subtle pill background for the group */
+    padding: 6px 12px;
+    /* Padding inside the pill */
+    border-radius: 4px;
+    /* Slight roundness for container if desired, or keep 0 for TE style */
+    border-radius: 0;
+    /* Sticking to TE style square */
+}
+
+.sort-label {
+    color: var(--muted-color);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.sort-select {
+    border: none;
+    background: transparent;
+    font-weight: 700;
+    cursor: pointer;
+    padding-right: 18px;
+    /* Space for arrow */
+    color: var(--text-color);
+    outline: none;
+    width: auto;
+    font-size: 11px;
+    text-transform: uppercase;
+    font-family: inherit;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%231a1a1a' stroke-width='1.5' stroke-linecap='square'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right center;
+    letter-spacing: 0.02em;
+}
+
+/* Mobile Tweak for the toolbar */
+@media (max-width: 480px) {
+    .results-toolbar {
+        padding-top: 16px;
+    }
+
+    .sort-wrapper {
+        padding: 4px 8px;
+        gap: 8px;
+    }
+
+    .sort-label {
+        display: none;
+        /* Hide 'Sort by:' label on very small screens to save space if needed? User said spacing is tight. Let's keep it but maybe abbreviate if really needed, but user said 'all fit on one line' */
+        display: inline-block;
+        /* Keeping it based on request */
+    }
+}
